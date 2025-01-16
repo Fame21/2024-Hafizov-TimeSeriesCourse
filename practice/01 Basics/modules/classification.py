@@ -4,6 +4,7 @@ from modules.metrics import *
 from modules.utils import z_normalize
 
 
+
 default_metrics_params = {'euclidean': {'normalize': True},
                          'dtw': {'normalize': True, 'r': 0.05}
                          }
@@ -29,7 +30,7 @@ class TimeSeriesKNN:
             self.metric_params.update(metric_params)
 
 
-    def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> Self:
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> 'TimeSeriesKNN':
         """
         Fit the model using X_train as training data and Y_train as labels
 
@@ -45,6 +46,10 @@ class TimeSeriesKNN:
        
         self.X_train = X_train
         self.Y_train = Y_train
+
+        # Normalize the training data if necessary
+        #if self.metric_params.get('normalize', False):
+        #    X_train = z_normalize(X_train)
 
         return self
 
@@ -66,7 +71,13 @@ class TimeSeriesKNN:
         dist = 0
 
         # INSERT YOUR CODE
-
+        if self.metric == 'euclidean':
+            dist = norm_ED_distance(x_train, x_test)  # Euclidean distance
+        elif self.metric == 'dtw':
+            dist = DTW_distance(x_train, x_test)  # Assuming you have a DTW function
+        else:
+            raise ValueError(f"Unsupported metric: {self.metric}")
+        
         return dist
 
 
@@ -84,8 +95,16 @@ class TimeSeriesKNN:
         """
 
         neighbors = []
-
+        distances = []
         # INSERT YOUR CODE
+        # Calculate distance between the test sample and all training samples
+        for i in range(len(self.X_train)):
+            dist = self._distance(self.X_train[i], x_test)
+            distances.append((dist, self.Y_train[i]))
+        
+        # Sort by distance and pick the first k neighbors
+        distances.sort(key=lambda x: x[0])
+        neighbors = distances[:self.n_neighbors]
 
         return neighbors
 
@@ -106,6 +125,18 @@ class TimeSeriesKNN:
         y_pred = []
 
         # INSERT YOUR CODE
+        # Normalize the test data if necessary
+        
+        if self.metric_params.get('normalize', False):
+            X_test = z_normalize(X_test)
+        
+        # For each test sample, find its k nearest neighbors and predict its label
+        for x_test in X_test:
+            neighbors = self._find_neighbors(x_test)
+            # Get the most frequent class among the neighbors
+            neighbor_labels = [label for _, label in neighbors]
+            predicted_label = max(set(neighbor_labels), key=neighbor_labels.count)
+            y_pred.append(predicted_label)
 
         return np.array(y_pred)
 

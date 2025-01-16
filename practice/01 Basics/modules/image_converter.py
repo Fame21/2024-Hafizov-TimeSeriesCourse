@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import math
 import cv2
+import matplotlib.pyplot as plt
 import imutils
-from google.colab.patches import cv2_imshow
+#from google.colab.patches import cv2_imshow
 
 
 class Image2TimeSeries:
@@ -33,8 +34,12 @@ class Image2TimeSeries:
         """
 
         # INSERT YOUR CODE
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        inverted = cv2.bitwise_not(gray)
+        blurred = cv2.GaussianBlur(inverted, (5, 5), 0)
+        _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        return prep_img
+        return binary
 
 
     def _get_contour(self, img: np.ndarray) -> np.ndarray:
@@ -164,7 +169,12 @@ class Image2TimeSeries:
         for i in range(len(edge_coordinates)):
             cv2.drawContours(img, np.array([[center, edge_coordinates[i]]]), -1, (255, 0, 255), 4)
 
-        cv2_imshow(imutils.resize(img, width=200))
+
+        if len(img.shape) == 3:  # Color image
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        plt.imshow(img, cmap='Accent')
+        plt.axis('off')
+        plt.show()
 
 
     def convert(self, img: np.ndarray, is_visualize: bool = False) -> np.ndarray:

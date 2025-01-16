@@ -4,6 +4,7 @@ from modules.metrics import ED_distance, norm_ED_distance, DTW_distance
 from modules.utils import z_normalize
 
 
+
 class PairwiseDistance:
     """
     Distance matrix between time series 
@@ -50,6 +51,12 @@ class PairwiseDistance:
         dist_func = None
 
         # INSERT YOUR CODE
+        if self.metric == 'euclidean' and self.is_normalize:
+            dist_func = norm_ED_distance
+        elif self.metric == 'euclidean':
+            dist_func = ED_distance
+        elif self.metric == 'dtw':
+            dist_func = DTW_distance
 
         return dist_func
 
@@ -68,7 +75,22 @@ class PairwiseDistance:
         
         matrix_shape = (input_data.shape[0], input_data.shape[0])
         matrix_values = np.zeros(shape=matrix_shape)
+
+
+        dist_func = self._choose_distance()
         
-        # INSERT YOUR CODE
+        if self.is_normalize:
+            input_data = z_normalize(input_data)
+
+        k = input_data.shape[0]
+
+        for i in range(k):
+            for j in range(i, k):
+                if i == j:
+                    matrix_values[i, j] = 0
+                    continue
+
+                matrix_values[i, j] = dist_func(input_data[i], input_data[j])
+                matrix_values[j, i] = matrix_values[i, j]
 
         return matrix_values
